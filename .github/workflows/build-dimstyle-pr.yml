@@ -1,0 +1,36 @@
+name: Build Patched Windows EXE
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR Number to pull (e.g., 2503 or 1042)'
+        required: true
+        default: '2503'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v4
+        with:
+          repository: storytold/cadcraft
+          ref: main
+
+      - name: Fetch and checkout PR branch
+        run: |
+          git fetch origin pull/${{ github.event.inputs.pr_number }}/head:pr-branch
+          git checkout pr-branch
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build CADCraft Release Binary
+        run: cargo build --release -p cadcraft
+
+      - name: Upload Windows EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: cadcraft-windows-patched
+          path: target/release/cadcraft.exe
